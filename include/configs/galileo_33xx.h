@@ -27,37 +27,99 @@
 
 #ifndef CONFIG_SPL_BUILD
 
-#define NANDARGS \
-	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
-	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0" \
-	"nandargs=setenv bootargs console=${console} " \
-		"root=${nandroot} " \
-		"rootfstype=${nandrootfstype}\0" \
-	"nandroot=ubi0:rootfs rw ubi.mtd=rootfs,2048\0" \
-	"nandrootfstype=ubifs rootwait=1\0" \
-	"nandboot=echo Booting from nand bkana ...; " \
-		"run nandargs; " \
-		"nand read ${fdt_addr} dtb; " \
-		"nand read ${loadaddr} kernel; " \
-		"bootz ${loadaddr} - ${fdt_addr}\0"
-
-/*	"loadenv=echo Importing device tree from Nand ...; " \
-		"ubifsload ${fdtaddr} nand0 400000; " \*/
-
-#define CONFIG_EXTRA_ENV_SETTINGS \
-	"loadaddr=82000000\0" \
-	"fdt_addr=88000000\0" \
-	"console=ttyO0,115200n8\0" \
-	"rootfs_name=rootfs\0" \
-	"source ${loadaddr}\0" \
+#define NETWORK_ARGS \
 	"ethaddr=00:15:7b:00:00:03\0" \
 	"serverip=192.168.60.1\0" \
-	"ipaddr=192.168.60.22\0" \
-	"netmask=255.255.255.0\0" \
-	NANDARGS
+	"ipaddr=192.168.60.101\0" \
+	"netmask=255.255.255.0\0"
+
+#define MTD_ARGS \
+	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
+	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0"
+
+#define ADDR_ARGS \
+	"kernel_loadaddr=82000000\0" \
+	"fdt_loadaddr=88000000\0"
+
+#define KERNEL_ARGS \
+	"console=ttyO0,115200n8\0" \
+	"rootargs_ubi=rw ubi.mtd=ubi,2048\0" \
+	"rootfstype_ubi=ubifs rootwait=1\0"
+
+#define BOOT_ARGS \
+	"BOOT_ORDER=A B\0" \
+	"BOOT_A_LEFT=3\0" \
+	"BOOT_B_LEFT=3\0" \
+
+#define BOOTCHOOSE_CMD \
+	"bootchoose_cmd=" \
+	"test -n \"${BOOT_ORDER}\" || setenv BOOT_ORDER \"A B\"; " \
+	"test -n \"${BOOT_A_LEFT}\" || setenv BOOT_A_LEFT 3; " \
+	"test -n \"${BOOT_B_LEFT}\" || setenv BOOT_B_LEFT 3; " \
+	"setenv default_bootargs \"console=${console} rootfstype=${rootfstype_ubi}\"; " \
+	"setenv bootargs; " \
+	"for BOOT_SLOT in \"${BOOT_ORDER}\"; do " \
+		"if test \"x${bootargs}\" != \"x\"; then ; " \
+		"elif test \"x${BOOT_SLOT}\" = \"xA\"; then " \
+			"if test ${BOOT_A_LEFT} -gt 0; then " \
+				"echo \"Found valid slot A, ${BOOT_A_LEFT} attempts remaining\"; " \
+				"setexpr BOOT_A_LEFT ${BOOT_A_LEFT} - 1; " \
+				"setenv load_cmd \"nand read ${kernel_loadaddr} kernelA; nand read ${fdt_loadaddr} dtbA;\"; " \
+				"setenv bootargs \"${default_bootargs} root=ubi0:rootfsA ${rootargs_ubi} rauc.slot=A\"; " \
+			"fi; " \
+		"elif test \"x${BOOT_SLOT}\" = \"xB\"; then " \
+			"if test ${BOOT_B_LEFT} -gt 0; then " \
+				"echo \"Found valid slot B, ${BOOT_B_LEFT} attempts remaining\"; " \
+				"setexpr BOOT_B_LEFT ${BOOT_B_LEFT} - 1; " \
+				"setenv load_cmd \"nand read ${kernel_loadaddr} kernelB; nand read ${fdt_loadaddr} dtbB;\"; " \
+				"setenv bootargs \"${default_bootargs} root=ubi0:rootfsB ${rootargs_ubi} rauc.slot=B\"; " \
+			"fi; " \
+		"fi; " \
+	"done; " \
+	"if test -n \"${bootargs}\"; then " \
+		"saveenv; " \
+	"else " \
+		"echo \"No valid slot found, resetting tries to 3\"; " \
+		"setenv BOOT_A_LEFT 3; " \
+		"setenv BOOT_B_LEFT 3; " \
+		"saveenv; " \
+		"reset; " \
+	"fi; " \
+	"\0"
+
+#define BOOT_CMD \
+	"boot_cmd=" \
+	"echo Determining boot slot... TEST; " \
+	"run bootchoose_cmd; " \
+	"echo Loading kernel and device-tree...; "  \
+	"run load_cmd; " \
+	"echo Starting kernel...; " \
+	"bootz ${kernel_loadaddr} - ${fdt_loadaddr}; " \
+	"\0"
+
+#define FIT_IMG_BOOT \
+	"fit_img_boot=" \
+	"echo Activating verification...; " \
+	"setenv verify yes; " \
+	"echo Load FIT Image in RAM...; " \
+	"nand read 84000000 kernelB; " \
+	"echo Boot FIT Image...; " \
+	"bootm 84000000; " \
+	"\0"
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	ADDR_ARGS \
+	NETWORK_ARGS \
+	KERNEL_ARGS \
+	MTD_ARGS \
+	BOOT_ARGS \
+	BOOTCHOOSE_CMD \
+	BOOT_CMD \
+	FIT_IMG_BOOT
 
 #define CONFIG_BOOTCOMMAND \
-		"run nandboot;"
+	"run boot_cmd;"
+
 #endif /* CONFIG_SPL_BUILD */
 
 #define CONFIG_TIMESTAMP
@@ -99,9 +161,10 @@
 
 #undef CONFIG_SYS_NAND_U_BOOT_OFFS
 /* ??PATCH bkana@leuze.com 2021-02-16 */
-#define CONFIG_SYS_NAND_U_BOOT_OFFS	0x200000
+#define CONFIG_SYS_NAND_U_BOOT_OFFS	0x180000
 
-#define CONFIG_ENV_OFFSET		0x300000 /* environment starts here */
+#define CONFIG_ENV_OFFSET		0x380000 /* environment starts here */
+
 #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB */
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 #ifdef CONFIG_SPL_OS_BOOT
