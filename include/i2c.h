@@ -283,8 +283,8 @@ int i2c_probe(uint8_t chip_addr);
  * Calls dm_i2c_read() with the device corresponding to @chip_addr, and offset
  * set to @addr. @alen must match the current setting for the device.
  */
-int i2c_read(uint8_t chip_addr, unsigned int addr, int alen, uint8_t *buffer,
-	     int len);
+//int i2c_read(uint8_t chip_addr, unsigned int addr, int alen, uint8_t *buffer,
+	     //int len);
 
 /**
  * i2c_write() - Compatibility function for driver model
@@ -292,8 +292,8 @@ int i2c_read(uint8_t chip_addr, unsigned int addr, int alen, uint8_t *buffer,
  * Calls dm_i2c_write() with the device corresponding to @chip_addr, and offset
  * set to @addr. @alen must match the current setting for the device.
  */
-int i2c_write(uint8_t chip_addr, unsigned int addr, int alen, uint8_t *buffer,
-	      int len);
+//int i2c_write(uint8_t chip_addr, unsigned int addr, int alen, uint8_t *buffer,
+	      //int len);
 
 /**
  * i2c_get_bus_num_fdt() - Compatibility function for driver model
@@ -757,11 +757,11 @@ int i2c_probe(uint8_t chip);
  *
  *   Returns: 0 on success, not 0 on failure
  */
-int i2c_read(uint8_t chip, unsigned int addr, int alen,
-				uint8_t *buffer, int len);
+//int i2c_read(uint8_t chip, unsigned int addr, int alen,
+				//uint8_t *buffer, int len);
 
-int i2c_write(uint8_t chip, unsigned int addr, int alen,
-				uint8_t *buffer, int len);
+//int i2c_write(uint8_t chip, unsigned int addr, int alen,
+				//uint8_t *buffer, int len);
 
 /*
  * Utility routines to read/write registers.

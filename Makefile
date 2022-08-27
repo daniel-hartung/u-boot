@@ -272,6 +272,8 @@ ifeq ($(HOSTOS),cygwin)
 HOSTCFLAGS	+= -ansi
 endif
 
+HOSTCFLAGS	+= "-fstack-protector-all"
+
 # Mac OS X / Darwin's C preprocessor is Apple specific.  It
 # generates numerous errors and warnings.  We want to bypass it
 # and use GNU C's cpp.	To do this we pass the -traditional-cpp
@@ -663,7 +665,8 @@ UBOOTINCLUDE    := \
 			$(if $(CONFIG_HAS_THUMB2),, \
 				-I$(srctree)/arch/$(ARCH)/thumb1/include),) \
 		-I$(srctree)/arch/$(ARCH)/include \
-		-include $(srctree)/include/linux/kconfig.h
+		-include $(srctree)/include/linux/kconfig.h \
+		-Ilib/cryptoauthlib/lib
 
 NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC) -print-file-name=include)
 CHECKFLAGS     += $(NOSTDINC_FLAGS)
@@ -873,6 +876,16 @@ LDFLAGS_u-boot += $(call ld-option, --no-dynamic-linker)
 ifeq ($(CONFIG_ARC)$(CONFIG_NIOS2)$(CONFIG_X86)$(CONFIG_XTENSA),)
 LDFLAGS_u-boot += -Ttext $(CONFIG_SYS_TEXT_BASE)
 endif
+
+#LDFLAGS_u-boot += -Ilib/cryptoauthlib/lib
+LDFLAGS_u-boot += -Llib/cryptoauthlib/lib
+LDFLAGS_u-boot += -lcryptoauth
+
+# Suppress warning 'path/to/file(file.c.o) uses 4-byte wchar_t yet the output is to use 2-byte wchar_t; use of wchar_t values across objects may fail'
+LDFLAGS_u-boot += --no-wchar-size-warning
+
+#LDLIBS_u-boot += -Llib/cryptoauthlib/lib
+#LDLIBS_u-boot += -lcryptoauth
 
 # Normally we fill empty space with 0xff
 quiet_cmd_objcopy = OBJCOPY $@
@@ -1476,7 +1489,7 @@ quiet_cmd_u-boot__ ?= LD      $@
       cmd_u-boot__ ?= $(LD) $(LDFLAGS) $(LDFLAGS_u-boot) -o $@ \
       -T u-boot.lds $(u-boot-init)                             \
       --start-group $(u-boot-main) --end-group                 \
-      $(PLATFORM_LIBS) -Map u-boot.map;                        \
+      $(PLATFORM_LIBS) lib/cryptoauthlib/lib/libcryptoauth.a -Map u-boot.map;                        \
       $(if $(ARCH_POSTLINK), $(MAKE) -f $(ARCH_POSTLINK) $@, true)
 
 quiet_cmd_smap = GEN     common/system_map.o

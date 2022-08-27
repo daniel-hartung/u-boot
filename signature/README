@@ -1,0 +1,7 @@
+Die Generierung der digitalen mit
+	bash create_hash.sh
+ausführen.
+
+Hier wird die Binary in Hexformat umgewandelt, was sinnlos ist... aber das war die erste Lösung die funktioniert hat, also kann man das noch ändern.
+
+Ab den Teil mit "echo '##Extracting R and S value of the signature ##'" wird versucht die beiden Werte aus der Signatur zu entnehmen. Dabei habe ich versucht es mit einem cut rauszuschneiden, aber da die Signatur immer eine unterschiedliche Länge haben kann, funktioniert das nicht. Entweder gibt es vielleicht eine Library die den Job erledigt, oder man ist gezwungen es per Hand rauszukopieren? 

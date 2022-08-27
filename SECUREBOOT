@@ -1,0 +1,24 @@
+Hier sind alle Informationen zur Implementierung des Secure Boots mit einem Secure Element von Microship.
+
+Allgemein wichtige Dateien:
+
+ - common/spl/spl.c | Im SPL ist die Logik zur Verifizierung des Codes von U-Boot
+ - cmd/i2c.c        | Darin sind die Befehle für die U-Boot Konsole
+ - lib/cryptoauthlib/lib/hal/hal_uboot_i2c_userspace.c | HAL Funktionen für die I2C-Kommunikation
+ - secureboot.config | Kann in der menuconfig (make menuconfig) reingeladen werden, damit die richtigen U-Boot Optionen geladen sind
+ - configs/ams1xx_defconfig | Sollte man eigentlich nicht brauchen, da die secureboot.config das ersetzt
+ - arch/arm/dts/am335x-galileo-common.dtsi & am335x-galileo.dts | Die verwendeten Device Trees
+ - include/configs/galileo_33xx.h | Darin sind die Bootscripts von U-Boot
+ - lib/cryptoauthlib/lib/CMakeFiles/cryptoauth.dir/build.make | Das Problem mit dem soft float point... Hier alle mfloat-abi=hard mit mfloat-abi=soft ersetzen
+
+Zum bauen des U-Boot Projekts (im U-Boot Verzeichnis):
+	bash make-crosscompile.sh
+
+Zum bauen der CryptoAuthLib (im U-Boot Verzeichnis):
+	bash cryptoauthlib_update.sh
+
+Wichtige Ordner:
+
+ - doc/uImage.FIT/galileo-fit-image | Die ganzen Dateien für das Verified Boot. Die README darin erklärt eigentlich alles
+ - keys | Hier sind die Keys, die für die Generierung des FIT-Images verwendet werden in doc/uImage.FIT/galileo-fit-image/galileo.its
+ - signature | Die ganzen Dateien für die Generierung der digitalen Signatur. Die README darin erklärt eigentlich alles

@@ -5,6 +5,7 @@
  *
  * Aneesh V <aneesh@ti.com>
  */
+#define LOG_DEBUG
 
 #include <common.h>
 #include <bloblist.h>
@@ -22,6 +23,25 @@
 #include <linux/compiler.h>
 #include <fdt_support.h>
 #include <bootcount.h>
+
+
+//#include <fsl_validate.h>
+///home/daniel/u-boot/board/freescale/common/fsl_chain_of_trust.c
+//#include "fsl_validate.h"
+///home/daniel/u-boot/include/fsl_validate.h
+///home/daniel/u-boot/board/freescale/common/cmd_esbc_validate.c
+#include <i2c.h>
+#include "../usr/include/time.h"
+#include <time.h>
+
+//#include <../../lib/cryptoauthlib/lib/hal/hal_uboot_i2c_userspace.c>
+#include "../lib/cryptoauthlib/lib/hal/atca_hal.h"
+#include "../lib/cryptoauthlib/lib/atca_basic.h"
+#include <../lib/cryptoauthlib.h>
+#include "../lib/cryptoauthlib/lib/atca_cfgs.h"
+//#include <../lib/cryptoauthlib/lib/hal/hal_uboot_i2c_userspace.c>
+
+#include <../include/u-boot/sha256.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -547,6 +567,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	struct spl_image_info spl_image;
 	int ret;
 
+	preloader_console_init();
 	debug(">>" SPL_TPL_PROMPT "board_init_r()\n");
 
 	spl_set_bd();
@@ -646,8 +667,124 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		debug("Failed to stash bootstage: err=%d\n", ret);
 #endif
 
+	////////////////////////
+	// Verifying U-Boot Code
+
+	i2c_set_bus_num(1);
+	hal_i2c_random();
+
+	//Time start
+	#define CLOCKS_PER_SEC 1000000;
+	//struct timeval tv1, tv2;
+	//gettimeofday(&tv1, NULL);
+	//double startTime = (float)clock()/CLOCKS_PER_SEC;
+
+	u32 uboot_size = spl_image.size - 64;  // 64 Byte U-Boot header not needed
+	char *code_entry = (char*)spl_image.entry_point;
+	uint8_t uboot_code[uboot_size];
+	memset(uboot_code, 0, uboot_size*sizeof(char));
+	int n;
+
+	for (n = 0; n < uboot_size; n++)
+	{
+		uboot_code[n] = code_entry[n];   
+	}    
+	char lastchar = uboot_code[uboot_size];
+	char *lastestchar = code_entry + uboot_size; 
+	
+	n = uboot_size*2;
+	char converted[(uboot_size * 2) + 1];
+	memset(converted, 0, uboot_size*sizeof(char)*2);	
+	const char xx[]= "0123456789ABCDEF";
+    while (--n >= 0) converted[n] = xx[(uboot_code[n>>1] >> ((1 - (n&1)) << 2)) & 0xF];
+	converted[uboot_size*2] = '\0'; 
+	char *lastconvertedchar = &converted[uboot_size*2]; 
+
+	uint8_t hash[32] = {0};
+	sha256_context ctx;
+	memset(ctx.buffer, 0, 64*sizeof(uint8_t));
+	sha256_starts(&ctx);
+	sha256_update(&ctx, converted, uboot_size*2);
+	sha256_finish(&ctx, hash);
+
+	const uint8_t realhash[] = {0x9a,0xf9,0x7f,0x45,0xb7,0x5e,0x67,0xb2,0x35,0xfc,0xd4,0xd9,0xf0,0x99,0x11,0x09,0x7a,0x7b,0x2b,0x35,0x77,0xce,0x2d,0xaf,0xef,0x33,0xa7,0x0c,0x11,0x2f,0x64,0x44};
+	const uint8_t realsignature[] = {0x80,0x80,0x70,0x15,0xE7,0x02,0xEB,0x53,0xF6,0x41,0xA0,0xC8,0x86,0x16,0x84,0xFB,0x0C,0x1F,0x62,0x06,0x75,0x59,0x5D,0xCB,0x1A,0x7C,0xD8,0xC7,0x1B,0x01,0x8C,0xD0,0x9A,0xFD,0x56,0xE1,0x00,0xD1,0xD5,0x6C,0x4A,0x9D,0x06,0x63,0xDC,0xB5,0x55,0x8F,0x3B,0xCB,0xA4,0x31,0xB2,0x3D,0x41,0x69,0x1C,0x45,0x05,0xC2,0x6B,0x5C,0x00,0x44};  
+	const uint8_t publicKey[] = {0xe7,0xa7,0x79,0xfc,0xfc,0xd5,0xe0,0xec,0xdf,0x6d,0x4d,0xd8,0x88,0xb7,0xe4,0x62,0x01,0xd2,0x67,0xc0,0xb1,0x49,0xdb,0x75,0xc4,0x29,0x4b,0x8c,0x34,0x8c,0xad,0x2d,0xb0,0xdb,0x0b,0x9a,0xe8,0x7d,0x21,0xa5,0x54,0x43,0x01,0xd7,0x76,0xfc,0x3f,0xf9,0x03,0x4c,0x8b,0x80,0xc0,0x2a,0xfb,0xf4,0xb7,0x4e,0x0a,0x0e,0x49,0x84,0x6f,0xf8}; 	
+	volatile ATCA_STATUS status = ATCA_SUCCESS;
+	
+	status = atcab_init(&cfg_atecc608b_i2c_default);
+	if (status == ATCA_SUCCESS)
+	{
+		uint8_t randomNumber[32] = {0};
+		atcab_random(&randomNumber);
+
+		volatile ATCA_STATUS stat = ATCA_SUCCESS;
+		uint16_t keySlot = 10;
+		uint16_t testSlot = 11;
+		uint8_t checkKey[64] = {0};
+		uint8_t testSlotDataWrite[64] = {0xDE};
+		uint8_t testSlotDataRead[64] = {0};
+		bool is_locked = false;
+		bool isverified = false;
+
+		
+		
+		uint8_t publicKey_se[72] = {0xe7,0xa7,0x79,0xfc,0xfc,0xd5,0xe0,0xec,0xdf,0x6d,0x4d,0xd8,0x88,0xb7,0xe4,0x62,0x01,0xd2,0x67,0xc0,0xb1,0x49,0xdb,0x75,0xc4,0x29,0x4b,0x8c,0x34,0x8c,0xad,0x2d,0xb0,0xdb,0x0b,0x9a,0xe8,0x7d,0x21,0xa5,0x54,0x43,0x01,0xd7,0x76,0xfc,0x3f,0xf9,0x03,0x4c,0x8b,0x80,0xc0,0x2a,0xfb,0xf4,0xb7,0x4e,0x0a,0x0e,0x49,0x84,0x6f,0xf8}; 
+		// Reformat public key into padded format
+		memmove(&publicKey_se[40], &publicKey_se[32], 32); // Move Y to padded position
+		memset(&publicKey_se[36], 0, 4);                 // Add Y padding bytes
+		memmove(&publicKey_se[4], &publicKey_se[0], 32);   // Move X to padded position
+		memset(&publicKey_se[0], 0, 4);                  // Add X padding bytes
+
+		// Es muss die (gesamte?) Data Zone und OTP Zone gelocked sein, damit
+		// man was auslesen kann.. ich denke mal so kann man es checken?
+		stat = atcab_is_config_locked(&is_locked);
+		stat = atcab_is_data_locked(&is_locked);
+		stat = atcab_is_slot_locked(keySlot, &is_locked);
+		//ATCA_STATUS atcab_write_pubkey(uint16_t slot, const uint8_t* public_key)
+		//stat = atcab_write_pubkey(keySlot, publicKey_se);
+		//stat = atcab_write_bytes_zone(ATCA_ZONE_DATA, testSlot, 0, publicKey_se, 72);
+		//stat = atcab_lock_data_slot(testSlot);
+		if (!is_locked)
+		{
+			stat = atcab_write_bytes_zone(ATCA_ZONE_DATA, keySlot, 0, publicKey, 64);
+			stat = atcab_lock_data_slot(keySlot);
+			
+			// Hiermit könnte man die gesamte Data Zone locken, nur
+			// wollen wir das so? Dann kann man nichts mehr überschreiben
+			// Okay, anscheinend locked es nicht alles?
+			//stat = atcab_lock_data_zone();
+		} 
+		stat = atcab_is_slot_locked(testSlot, &is_locked);
+		stat = atcab_read_bytes_zone(ATCA_ZONE_DATA, keySlot, 0, &checkKey, 64);
+		//stat = atcab_read_bytes_zone(ATCA_ZONE_DATA, testSlot, 0, &testSlotDataRead, 64);
+
+		stat = atcab_nonce_base(NONCE_MODE_TARGET_MSGDIGBUF, 0, realhash, NULL);
+		stat = atcab_read_bytes_zone(ATCA_ZONE_DATA, testSlot, 0, &testSlotDataRead, 64);
+
+		stat = atcab_verify_extern(realhash, realsignature, publicKey, &isverified);
+		stat = atcab_verify(VERIFY_MODE_STORED, testSlot, realsignature, NULL, NULL, NULL);
+		
+		//atcab_verify_stored(const uint8_t* message, const uint8_t* signature, uint16_t key_id, bool* is_verified)
+		stat = atcab_verify_stored(realhash, realsignature, testSlot, &isverified);
+
+		// Time end
+		//double endTime = (float)clock()/CLOCKS_PER_SEC;
+		//double timeElapsed = endTime - startTime;
+		//gettimeofday(&tv2, NULL);
+		//ulong test = timer_get_boot_us();
+		//double tvEnd = (double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec);
+
+		stat = atcab_verify_extern(realhash, realsignature, publicKey, &isverified);
+		int i = 0;
+		i += 1;
+	}	
+
+	
+
 	debug("loaded - jumping to U-Boot...\n");
-	spl_board_prepare_for_boot();
+
+	spl_board_prepare_for_boot(); 
 	jump_to_image_no_args(&spl_image);
 }
 

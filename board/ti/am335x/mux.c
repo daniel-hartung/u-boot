@@ -104,21 +104,21 @@ static struct module_pin_mux mmc1_pin_mux[] = {
 	{-1},
 };
 
-static struct module_pin_mux i2c0_pin_mux[] = {
-	{OFFSET(i2c0_sda), (MODE(0) | RXACTIVE |
-			PULLUDEN | SLEWCTRL)}, /* I2C_DATA */
-	{OFFSET(i2c0_scl), (MODE(0) | RXACTIVE |
-			PULLUDEN | SLEWCTRL)}, /* I2C_SCLK */
+static struct module_pin_mux i2c1_pin_mux[] = {
+       {OFFSET(uart0_ctsn), (MODE(3) | RXACTIVE |
+                       PULLUDEN | SLEWCTRL)}, /* I2C_DATA */
+       {OFFSET(uart0_rtsn), (MODE(3) | RXACTIVE |
+                       PULLUDEN | SLEWCTRL)}, /* I2C_SCLK */
 	{-1},
 };
 
-static struct module_pin_mux i2c1_pin_mux[] = {
+/*static struct module_pin_mux i2c1_pin_mux[] = {
 	{OFFSET(spi0_d1), (MODE(2) | RXACTIVE |
-			PULLUDEN | SLEWCTRL)},	/* I2C_DATA */
+			PULLUDEN | SLEWCTRL)},	 *//* I2C_DATA *//*
 	{OFFSET(spi0_cs0), (MODE(2) | RXACTIVE |
-			PULLUDEN | SLEWCTRL)},	/* I2C_SCLK */
+			PULLUDEN | SLEWCTRL)},	 *//* I2C_SCLK *//*
 	{-1},
-};
+};*/
 
 static struct module_pin_mux spi0_pin_mux[] = {
 	{OFFSET(spi0_sclk), (MODE(0) | RXACTIVE | PULLUDEN)},	/* SPI0_SCLK */
@@ -301,7 +301,7 @@ void enable_uart5_pin_mux(void)
 
 void enable_i2c0_pin_mux(void)
 {
-	configure_module_pin_mux(i2c0_pin_mux);
+	configure_module_pin_mux(i2c1_pin_mux);
 }
 
 /*

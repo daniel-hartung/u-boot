@@ -63,6 +63,7 @@
  *
  * Adapted from cmd_mem.c which is copyright Wolfgang Denk (wd@denx.de).
  */
+#include "cryptoauthlib.h"
 
 #include <common.h>
 #include <bootretry.h>
@@ -77,6 +78,13 @@
 #include <malloc.h>
 #include <asm/byteorder.h>
 #include <linux/compiler.h>
+
+#include "calib/calib_basic.h"
+//#include "hal/atca_hal.h"
+//#include <atca_hal.h>
+//#include "../lib/cryptoauthlib/lib/calib/calib_basic.h"
+
+
 
 /* Display values from last command.
  * Memory modify remembered values are different from display memory.
@@ -1944,6 +1952,64 @@ static int do_i2c_reset(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv
 	return 0;
 }
 
+static int do_i2c_sec(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+{
+#if defined(CONFIG_DM_I2C)
+	struct udevice *bus;
+	struct udevice *dev;
+	uint8_t buffer = 0x01;
+	uint32_t wake;
+	int ret;
+	uint chip = 0x60;
+
+	if (i2c_get_cur_bus(&bus))
+		return CMD_RET_FAILURE;
+
+	ret = i2c_get_cur_bus_chip(chip, &dev);
+	//if (!ret && alen != -1)
+		//ret = i2c_set_chip_offset_len(dev, alen);
+	if (ret)
+		return i2c_report_err(ret, I2C_ERR_WRITE);
+
+	ret = dm_i2c_write(dev, 0x00, &buffer, 0x01);
+
+	udelay(1500);
+
+	ret = dm_i2c_read(dev, 0x00, &wake, 0x04);
+	
+	
+#endif
+	return 0;
+}
+
+static int do_i2c_random(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+{
+#if defined(CONFIG_DM_I2C)
+	struct udevice *bus;
+	struct udevice *dev;
+	uint8_t buffer = 0x01;
+	uint32_t wake;
+	int ret;
+	uint chip = 0x60;
+	uint8_t randomNumber = 0;
+	uint8_t status;
+
+	if (i2c_get_cur_bus(&bus))
+		return CMD_RET_FAILURE;
+	
+	//ATCA_STATUS calib_random(ATCADevice device, 
+	// uint8_t *rand_out)
+
+	//ATCA_STATUS atcab_random(uint8_t* rand_out)
+	//status = atcab_random(randomNumber);
+	//status = calib_random();
+#endif
+	return 0;
+}
+
+//ATCAIfaceCfg interfaceConfig = new ATCAIfaceCfg();
+
+
 static cmd_tbl_t cmd_i2c_sub[] = {
 #if defined(CONFIG_SYS_I2C) || defined(CONFIG_DM_I2C)
 	U_BOOT_CMD_MKENT(bus, 1, 1, do_i2c_show_bus, "", ""),
@@ -1973,6 +2039,8 @@ static cmd_tbl_t cmd_i2c_sub[] = {
 	U_BOOT_CMD_MKENT(sdram, 1, 1, do_sdram, "", ""),
 #endif
 	U_BOOT_CMD_MKENT(speed, 1, 1, do_i2c_bus_speed, "", ""),
+	U_BOOT_CMD_MKENT(sec, 0, 1, do_i2c_sec, "", ""),
+	U_BOOT_CMD_MKENT(random, 0, 1, do_i2c_random, "", ""),
 };
 
 static __maybe_unused void i2c_reloc(void)

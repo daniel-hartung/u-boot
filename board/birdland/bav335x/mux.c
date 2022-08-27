@@ -168,7 +168,8 @@ void enable_uart5_pin_mux(void)
 
 void enable_i2c0_pin_mux(void)
 {
-	configure_module_pin_mux(i2c0_pin_mux);
+	//configure_module_pin_mux(i2c0_pin_mux);
+	configure_module_pin_mux(i2c1_pin_mux);
 }
 
 

@@ -313,6 +313,8 @@ OBJCOPYFLAGS_u-boot-x86-16bit-spl.bin := -O binary -j .start16 -j .resetvec
 $(obj)/u-boot-x86-16bit-spl.bin: $(obj)/u-boot-spl FORCE
 	$(call if_changed,objcopy)
 
+LDFLAGS_$(SPL_BIN) += -L../lib/cryptoauthlib/lib
+
 LDFLAGS_$(SPL_BIN) += -T u-boot-spl.lds $(LDFLAGS_FINAL)
 
 # Avoid 'Not enough room for program headers' error on binutils 2.28 onwards.
@@ -369,6 +371,7 @@ quiet_cmd_u-boot-spl ?= LD      $@
 		       $(patsubst $(obj)/%,%,$(u-boot-spl-init)) --start-group \
 		       $(patsubst $(obj)/%,%,$(u-boot-spl-main))  \
 		       $(patsubst $(obj)/%,%,$(u-boot-spl-platdata)) \
+			-lcryptoauth \
 		       --end-group \
 		       $(PLATFORM_LIBS) -Map $(SPL_BIN).map -o $(SPL_BIN))
 

@@ -34,8 +34,8 @@
 #define S64_MIN		((s64)(-S64_MAX - 1))
 
 /* Aliases defined by stdint.h */
-#define UINT32_MAX	U32_MAX
-#define UINT64_MAX	U64_MAX
+//#define UINT32_MAX	U32_MAX
+//#define UINT64_MAX	U64_MAX
 
 #define STACK_MAGIC	0xdeadbeef
 

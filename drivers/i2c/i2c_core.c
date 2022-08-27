@@ -270,7 +270,7 @@ int i2c_set_bus_num(unsigned int bus)
  * Probe the given I2C chip address.  Returns 0 if a chip responded,
  * not 0 on failure.
  */
-int i2c_probe(uint8_t chip)
+int i(uint8_t chip)
 {
 	return I2C_ADAP->probe(I2C_ADAP, chip);
 }

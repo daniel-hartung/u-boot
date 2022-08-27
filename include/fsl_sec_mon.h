@@ -11,6 +11,9 @@
 #include <common.h>
 #include <asm/io.h>
 
+//don't actually do it like this
+// #define CONFIG_SYS_FSL_SEC_MON_LE
+
 #ifdef CONFIG_SYS_FSL_SEC_MON_LE
 #define sec_mon_in32(a)       in_le32(a)
 #define sec_mon_out32(a, v)   out_le32(a, v)

@@ -121,7 +121,9 @@ typedef unsigned int uint;
 #else /* !USE_HOSTCC */
 
 /* Type for `void *' pointers. */
-typedef unsigned long int uintptr_t;
+#ifndef uintptr_t
+//typedef unsigned long int uintptr_t;
+#endif
 
 #include <linux/string.h>
 #include <linux/types.h>

@@ -1,0 +1,51 @@
+/*
+ * Simple U-boot uImage source file containing a single kernel
+ */
+
+/dts-v1/;
+
+/ {
+	description = "Simple image with single Linux kernel";
+	#address-cells = <1>;
+
+	images {
+		kernel@1 {
+			description = "Galileo Linux kernel";
+			data = /incbin/("/home/daniel/yocto-ams1xx/build/tmp/deploy/images/ams1xx/zImage");
+			type = "kernel";
+			arch = "arm";
+			os = "linux";
+			compression = "none";
+			load = <0x82000000>; 
+			entry = <0x82000000>;
+			hash@1 {
+				algo = "sha256";
+			};
+		};
+		fdt@1 {
+			description = "Flattened Device Tree";
+			data = /incbin/("/home/daniel/yocto-ams1xx/build/tmp/deploy/images/ams1xx/am335x-galileo-33xx.dtb");
+			type = "flat_dt";
+			arch = "arm";
+			//load = <0x88000000>;
+			compression = "none";
+			hash@1 {
+				algo = "sha256";
+			};
+		};
+	};
+
+	configurations {
+		default = "config@1";
+		config@1 {
+			description = "Boot Galileo Linux kernel";
+			kernel = "kernel@1";
+			fdt = "fdt@1";
+			signature@1{
+                                algo = "sha256,rsa2048";
+                                key-name-hint = "dev_key";
+                                sign-images = "fdt", "kernel";
+                        };
+		};
+	};
+};

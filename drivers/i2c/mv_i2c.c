@@ -310,7 +310,7 @@ static int __i2c_read(struct mv_i2c *base, uchar chip, u8 *addr, int alen,
 	return 0;
 }
 
-static int __i2c_write(struct mv_i2c *base, uchar chip, u8 *addr, int alen,
+static int i2c_write(struct mv_i2c *base, uchar chip, u8 *addr, int alen,
 		       uchar *buffer, int len)
 {
 	struct mv_i2c_msg msg;
@@ -368,7 +368,8 @@ static int __i2c_write(struct mv_i2c *base, uchar chip, u8 *addr, int alen,
 	return 0;
 }
 
-#ifndef CONFIG_DM_I2C
+//#ifndef CONFIG_DM_I2C
+#ifdef CONFIG_DM_I2C
 
 static struct mv_i2c *base_glob;
 
