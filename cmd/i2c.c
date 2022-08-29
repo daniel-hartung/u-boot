@@ -80,11 +80,6 @@
 #include <linux/compiler.h>
 
 #include "calib/calib_basic.h"
-//#include "hal/atca_hal.h"
-//#include <atca_hal.h>
-//#include "../lib/cryptoauthlib/lib/calib/calib_basic.h"
-
-
 
 /* Display values from last command.
  * Memory modify remembered values are different from display memory.
@@ -1966,8 +1961,6 @@ static int do_i2c_sec(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]
 		return CMD_RET_FAILURE;
 
 	ret = i2c_get_cur_bus_chip(chip, &dev);
-	//if (!ret && alen != -1)
-		//ret = i2c_set_chip_offset_len(dev, alen);
 	if (ret)
 		return i2c_report_err(ret, I2C_ERR_WRITE);
 
@@ -1982,6 +1975,7 @@ static int do_i2c_sec(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[]
 	return 0;
 }
 
+// Probably useless function, could delete it
 static int do_i2c_random(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 #if defined(CONFIG_DM_I2C)

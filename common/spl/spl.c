@@ -24,22 +24,12 @@
 #include <fdt_support.h>
 #include <bootcount.h>
 
-
-//#include <fsl_validate.h>
-///home/daniel/u-boot/board/freescale/common/fsl_chain_of_trust.c
-//#include "fsl_validate.h"
-///home/daniel/u-boot/include/fsl_validate.h
-///home/daniel/u-boot/board/freescale/common/cmd_esbc_validate.c
 #include <i2c.h>
-#include "../usr/include/time.h"
-#include <time.h>
 
-//#include <../../lib/cryptoauthlib/lib/hal/hal_uboot_i2c_userspace.c>
 #include "../lib/cryptoauthlib/lib/hal/atca_hal.h"
 #include "../lib/cryptoauthlib/lib/atca_basic.h"
 #include <../lib/cryptoauthlib.h>
 #include "../lib/cryptoauthlib/lib/atca_cfgs.h"
-//#include <../lib/cryptoauthlib/lib/hal/hal_uboot_i2c_userspace.c>
 
 #include <../include/u-boot/sha256.h>
 
@@ -673,12 +663,6 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	i2c_set_bus_num(1);
 	hal_i2c_random();
 
-	//Time start
-	#define CLOCKS_PER_SEC 1000000;
-	//struct timeval tv1, tv2;
-	//gettimeofday(&tv1, NULL);
-	//double startTime = (float)clock()/CLOCKS_PER_SEC;
-
 	u32 uboot_size = spl_image.size - 64;  // 64 Byte U-Boot header not needed
 	char *code_entry = (char*)spl_image.entry_point;
 	uint8_t uboot_code[uboot_size];
@@ -726,8 +710,6 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		uint8_t testSlotDataRead[64] = {0};
 		bool is_locked = false;
 		bool isverified = false;
-
-		
 		
 		uint8_t publicKey_se[72] = {0xe7,0xa7,0x79,0xfc,0xfc,0xd5,0xe0,0xec,0xdf,0x6d,0x4d,0xd8,0x88,0xb7,0xe4,0x62,0x01,0xd2,0x67,0xc0,0xb1,0x49,0xdb,0x75,0xc4,0x29,0x4b,0x8c,0x34,0x8c,0xad,0x2d,0xb0,0xdb,0x0b,0x9a,0xe8,0x7d,0x21,0xa5,0x54,0x43,0x01,0xd7,0x76,0xfc,0x3f,0xf9,0x03,0x4c,0x8b,0x80,0xc0,0x2a,0xfb,0xf4,0xb7,0x4e,0x0a,0x0e,0x49,0x84,0x6f,0xf8}; 
 		// Reformat public key into padded format
@@ -768,20 +750,10 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		//atcab_verify_stored(const uint8_t* message, const uint8_t* signature, uint16_t key_id, bool* is_verified)
 		stat = atcab_verify_stored(realhash, realsignature, testSlot, &isverified);
 
-		// Time end
-		//double endTime = (float)clock()/CLOCKS_PER_SEC;
-		//double timeElapsed = endTime - startTime;
-		//gettimeofday(&tv2, NULL);
-		//ulong test = timer_get_boot_us();
-		//double tvEnd = (double) (tv2.tv_usec - tv1.tv_usec) / 1000000 + (double) (tv2.tv_sec - tv1.tv_sec);
-
 		stat = atcab_verify_extern(realhash, realsignature, publicKey, &isverified);
 		int i = 0;
 		i += 1;
 	}	
-
-	
-
 	debug("loaded - jumping to U-Boot...\n");
 
 	spl_board_prepare_for_boot(); 
